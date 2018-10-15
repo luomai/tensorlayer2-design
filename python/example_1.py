@@ -2,8 +2,8 @@
 
 import tensorflow as tf
 
-import fake_tensorlayer as tl
-from base_layer_design import *
+import tensorlayer_mock as tl
+from base_layer import *
 
 # Sample program
 image = tf.placeholder(tf.float32, [None, 28 * 28 * 3])

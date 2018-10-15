@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 import tensorflow as tf
 # import tensorlayer as tl
-import fake_tensorlayer as tl
+import tensorlayer_mock as tl
 
 
 def overrides(f):
@@ -47,7 +47,7 @@ class BaseLayer(metaclass=abc.ABCMeta):
 
 # physical objects
 class LayerInstance(object):
-    def __init__(self, inputs: [AbstractLayer]):
+    def __init__(self, inputs: [BaseLayer]):
         self._inputs = inputs
         self._weights = []
         self._output_tensors = []
