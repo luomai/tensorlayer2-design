@@ -7,75 +7,87 @@ import tensorflow as tf
 import tensorlayer_mock as tl
 
 
-def overrides(f):
-    return f
-
 class BaseLayer(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
 
     @abstractmethod
-    def build(self, _my_layer_instance):
+    def build(self, instance, input_shapes):
         raise Exception(
             "The build_weights method must be implemented by inherited class")
 
     @abstractmethod
-    def forward(self, _my_layer_instance):
+    def forward(self, instance, inputs):
         raise Exception(
             "The forward method must be implemented by inherited class")
 
     # Protected method
     @classmethod
     def _add_weight(cls, instance, name, shape):
-        weight = tl.get_variable(
-            name, shape)  # tl.get_variable should follow tf.keras.layers
+        weight = tl.get_variable(name, shape)  # tl.get_variable should follow tf.keras.layers
         instance.weights.append(weight)  # Add into the weight collection
-        instance.add_attribute(name,
-                               weight)  # Add an attribute for easy access
+        instance.add_attribute(name, weight)
         return weight
 
     def __init__(self):
         pass
 
-    def __call__(self, *input_layer_instances):
-        instance = LayerInstance(list(input_layer_instances))
-        self.build(instance)
-        output_tensors = self.forward(instance)
-        instance._output_tensors = output_tensors
-        return instance
+    def __call__(self, *input_instances):
+        if tf.executing_eagerly():
+            instance = EagerLayerInstance(list(input_instances))
+
+        else:
+            instance = LazyLayerInstance(list(input_instances))
+
+            inputs = []
+            for instance in input_instances:
+                for input in instance._outputs:
+                    inputs.append(input)
+            input_shapes = [input.shape for input in inputs] # shape[0] is batch size
+            self.build(instance, input_shapes)
+            instance._outputs = self.forward(instance, inputs)
+            return instance
 
 
-# physical objects
-class LayerInstance(object):
-    def __init__(self, inputs: [BaseLayer]):
-        self._inputs = inputs
+class BaseLayerInstance(object):
+    def __init__(self):
         self._weights = []
-        self._output_tensors = []
 
     def add_attribute(self, name, attr):
         setattr(self, name, attr)
 
     @property
     def all_weights(self):
-        # visitor = AllWeightsVisitor()
-        # return visitor.all_weights(self)
         return get_all_weights(self)
-
-    @property
-    def inputs(self):
-        return self._inputs
 
     @property
     def weights(self):
         return self._weights
 
+
+class EagerLayerInstance(BaseLayerInstance):
+    def __init__(self, layer):
+        super().__init__()
+        self._layer = layer
+
+
+class LazyLayerInstance(BaseLayerInstance):
+    def __init__(self, input_instances):
+        super().__init__()
+        self._input_instances = input_instances
+        self._outputs = []
+
     @property
-    def output_tensors(self):
-        return self._output_tensors
+    def input_instances(self):
+        return self._input_instances
+
+    @property
+    def outputs(self):
+        return self._outputs
 
     def __str__(self):
-        input_spec = ','.join('?' for x in self._inputs)  # FIXME
-        output_spec = ','.join(str(y.shape) for y in self._output_tensors)
+        input_spec = ','.join('?' for x in self._input_instances)  # FIXME
+        output_spec = ','.join(str(y.shape) for y in self._outputs)
         return '{%s} -> {%s}, %d weights' % (input_spec, output_spec,
                                              len(self._weights))
 
@@ -85,9 +97,9 @@ def get_all_weights(l):
     weights = []
 
     def _visit(l):
-        for prev in l.inputs:
-            if isinstance(prev, LayerInstance):
-                _visit(prev)
+        for instance in l.input_instances:
+            if isinstance(instance, BaseLayerInstance):
+                _visit(instance)
         weights.extend(l.weights)
 
     _visit(l)
@@ -101,25 +113,31 @@ class MagicAddLayer(BaseLayer):
         self.m = 1000
 
     # @overrides(BaseLayer)
-    def build(self, my_layer_instance):
-        assert len(my_layer_instance.inputs) == 1
-        x = my_layer_instance.inputs[0].output_tensors[0]
-        _batch_size, n = x.shape
-        weight = self._add_weight(my_layer_instance, 'magic_add_weight',
-                                  (int(n), self.m))
+    def build(self, instance, input_shapes):
+        batch_size, n = input_shapes[0] # assume only one
+        self._add_weight(instance, 'magic_add_weight', (int(n), self.m))
 
     # @overrides(BaseLayer)
-    def forward(self, my_layer_instance):
-        assert len(my_layer_instance.inputs) == 1
-        x = my_layer_instance.inputs[0].output_tensors[0]
-        y = tf.matmul(x, my_layer_instance.magic_add_weight)
-        output = tf.add(y, self.add_constant)
-        return [output]
+    def forward(self, instance, inputs):
+        outputs = []
+        for input in inputs:
+            y = tf.matmul(input, instance.magic_add_weight)
+            z = tf.add(y, self.add_constant)
+            outputs.append(z)
+        return outputs
 
 
 class InputLayer(BaseLayer):
-    def build(self, my_layer_instance):
+    def build(self, instance, input_shapes):
         pass
 
-    def forward(self, my_layer_instance):
-        return my_layer_instance.inputs
+    def forward(self, instance, inputs):
+        return inputs
+
+    def __call__(self, placeholder):
+        if tf.executing_eagerly():
+            pass
+        else:
+            instance = LazyLayerInstance([])
+            instance._outputs = self.forward(instance, [placeholder])
+            return instance
