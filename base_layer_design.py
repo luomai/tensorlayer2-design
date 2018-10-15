@@ -37,14 +37,14 @@ class MagicAddLayer(BaseLayer):
     @overrides(BaseLayer)
     def build(self, my_layer_instance):
         assert my_layer_instance.input_layer_instances != None and len(my_layer_instance.input_layer_instances) == 1
-        input = my_layer_instance.input_layer_instances[0] # Assume one input for simplicity
+        input = my_layer_instance.input_layer_instances[0].output_tensors[0] # Assume one input for simplicity
         weight = self._add_weight(my_layer_instance, 'magic_add_weight', input.shape)
         assert weight in my_layer_instance.weights and my_layer_instance.magic_add_weight is not None
 
     @overrides(BaseLayer)
     def forward(self, my_layer_instance):
         assert my_layer_instance.input_layer_instances != None and len(my_layer_instance.input_layer_instances) == 1
-        input = my_layer_instance.input_layer_instances[0].output_tensor # Assume one input for simplicity
+        input = my_layer_instance.input_layer_instances[0].output_tensors[0] # Assume one input for simplicity
         x = tf.mul(input, my_layer_instance.magic_add_weight)
         output = tf.add(x, self.add_constant)
         return [output]
@@ -54,7 +54,7 @@ class LayerInstance(object):
     def __init__(self);
         self.input_layer_instances = None
         self.weights = []
-        self.output_tensor = None
+        self.output_tensors = None
 
     def add_attribute(self, name, attr):
         setattr(self, name, attr)
