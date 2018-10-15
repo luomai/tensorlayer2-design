@@ -1,6 +1,7 @@
 # Mac
 .DS_Store
 python/env
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -12,7 +13,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+instantiate/
 develop-eggs/
 dist/
 downloads/

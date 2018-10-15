@@ -2,11 +2,12 @@
 
 import tensorflow as tf
 
-import tensorlayer_mock as tl
+tf.executing_eagerly() 
+
 from base_layer import *
 
 # Sample program
-image = tf.placeholder(tf.float32, [None, 28 * 28 * 3])
+image = tf.ones([28 * 28 * 3], tf.float32)
 
 x = InputLayer()(image)
 print('x :: %s' % (x))
