@@ -83,7 +83,7 @@ class BaseVisitor(object):
         for layer in root_layer_instance.input_layer_instances:
             self.traverse(layer)
         self.visit(root_layer_instance) # Child's visit implementation
-        self.visited_nodes.append(self)
+        self.visited_nodes.append(root_layer_instance)
 
     def traverse_all(self, root_layer_instances):
         for layer in root_layer_instances:
