@@ -105,7 +105,7 @@ class AllWeightsVisitor(BaseVisitor):
 
 # Sample program
 input = tf.placeholder()
-x = tl.layers.Input()(input)
+x = tl.layers.InputLayer()(input)
 layer = tl.layers.MagicAddLayer(tf.constant(10))(x)
 print(layer.all_weights)
 
