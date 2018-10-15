@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 import tensorflow as tf
 # import tensorlayer as tl
-import tensorlayer_mock as tl
+import fake_tensorlayer as tl
 
 
 def overrides(f):
