@@ -13,10 +13,10 @@ image = tf.ones([28 * 28 * 3], tf.float32)
 egr_plh = EagerPlaceholder()
 
 x = InputLayer()(egr_plh)
-y = MagicAddLayer(tf.constant(10))(x)
+y = MagicAddLayer(tf.constant(10.0))(x)
 val = egr_plh(image)
 print(val)
 
-z = MagicAddLayer(tf.constant(10))(y)
+z = MagicAddLayer(tf.constant(15.0))(y)
 val = egr_plh(image)
 print(val)
