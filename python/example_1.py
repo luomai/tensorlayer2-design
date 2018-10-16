@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 import tensorlayer_mock as tl
-from base_layer import *
+from base_layer import InputLayer, MagicAddLayer
 
 # Sample program
 image = tf.placeholder(tf.float32, [None, 28 * 28 * 3])

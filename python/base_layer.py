@@ -7,6 +7,20 @@ import tensorflow as tf
 import tensorlayer_mock as tl
 
 
+def get_all_weights(l):
+    # FIXME: remove dup
+    all_weights = []
+
+    def _visit(l):
+        for instance in l.input_instances:
+            if isinstance(instance, BaseLayerInstance):
+                _visit(instance)
+        all_weights.extend(l.weights)
+
+    _visit(l)
+    return all_weights
+
+
 class BaseLayer(metaclass=abc.ABCMeta):
     def __init__(self):
         pass
@@ -66,9 +80,17 @@ class BaseLayerInstance(object):
 
 
 class EagerLayerInstance(BaseLayerInstance):
-    def __init__(self, layer):
+    def __init__(self, output_instances, layer):
         super().__init__()
+        self._output_instances = output_instances
         self._layer = layer
+
+    def compute(self, inputs):
+        return self._layer.forward(self, inputs)
+
+    def __call__(self, input):
+        # Propagate the input to all output instances
+        pass
 
 
 class LazyLayerInstance(BaseLayerInstance):
@@ -90,20 +112,6 @@ class LazyLayerInstance(BaseLayerInstance):
         output_spec = ','.join(str(y.shape) for y in self._outputs)
         return '{%s} -> {%s}, %d weights' % (input_spec, output_spec,
                                              len(self._weights))
-
-
-def get_all_weights(l):
-    # FIXME: remove dup
-    weights = []
-
-    def _visit(l):
-        for instance in l.input_instances:
-            if isinstance(instance, BaseLayerInstance):
-                _visit(instance)
-        weights.extend(l.weights)
-
-    _visit(l)
-    return weights
 
 
 class MagicAddLayer(BaseLayer):
@@ -136,8 +144,17 @@ class InputLayer(BaseLayer):
 
     def __call__(self, placeholder):
         if tf.executing_eagerly():
-            pass
+            instance = EagerLayerInstance([], self)
+            return instance
         else:
             instance = LazyLayerInstance([])
             instance._outputs = self.forward(instance, [placeholder])
             return instance
+
+
+class EagerPlaceholder(object):
+    def __init__(self):
+        pass
+
+    def __call__(self):
+        pass
