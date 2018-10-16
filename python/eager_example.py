@@ -14,9 +14,8 @@ egr_plh = EagerPlaceholder()
 
 x = InputLayer()(egr_plh)
 y = MagicAddLayer(tf.constant(10.0))(x)
-val = egr_plh(image)
-print(val)
-
 z = MagicAddLayer(tf.constant(15.0))(y)
+
 val = egr_plh(image)
+# val = z.forward(y.forward(x.forward(image)))
 print(val)

@@ -88,10 +88,6 @@ class EagerLayerInstance(BaseLayerInstance):
     def compute(self, inputs):
         return self._layer.forward(self, inputs)
 
-    def __call__(self, input):
-        # Propagate the input to all output instances
-        pass
-
 
 class LazyLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
@@ -156,5 +152,5 @@ class EagerPlaceholder(object):
     def __init__(self):
         pass
 
-    def __call__(self):
+    def __call__(self, input):
         pass
