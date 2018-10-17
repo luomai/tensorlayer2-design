@@ -103,7 +103,7 @@ class BaseLayer(metaclass=abc.ABCMeta):
         if tf.executing_eagerly():
             instance = EagerLayerInstance(input_instances)
         else:
-            instance = LazyLayerInstance(list(input_instances))
+            instance = LazyLayerInstance(input_instances)
 
         self.build(instance, train, reuse)
 
