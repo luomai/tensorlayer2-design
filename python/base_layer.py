@@ -54,13 +54,8 @@ class BaseLayerInstance(object):
 
 
 class EagerLayerInstance(BaseLayerInstance):
-    def __init__(self, input_instances, layer):
+    def __init__(self, input_instances):
         super().__init__(input_instances)
-        self._layer = layer
-
-    def __call__(self, inputs, train, reuse):
-        return self._layer.forward(self, inputs)
-
 
 class LazyLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
@@ -106,7 +101,7 @@ class BaseLayer(metaclass=abc.ABCMeta):
             input_instances = [input_instances]
 
         if tf.executing_eagerly():
-            instance = EagerLayerInstance(input_instances, self)
+            instance = EagerLayerInstance(input_instances)
         else:
             instance = LazyLayerInstance(list(input_instances))
 
@@ -145,7 +140,7 @@ class InputLayer(BaseLayer):
 
     def __call__(self, input_tensor):
         if tf.executing_eagerly():
-            instance = EagerLayerInstance(input_instances=[], layer=self)
+            instance = EagerLayerInstance(input_instances=[])
         else:
             instance = LazyLayerInstance(input_instances=[])
         instance._outputs = [input_tensor]
