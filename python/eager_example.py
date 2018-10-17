@@ -8,8 +8,7 @@ from base_layer import InputLayer, MagicAddLayer
 tf.enable_eager_execution()
 
 # Sample program
-image1 = tf.ones([28 * 28 * 3], tf.float32)  # :: np.array
-image2 = tf.ones([28 * 28 * 3], tf.float32)  # :: np.array
+image = tf.ones([28 * 28 * 3], tf.float32)  # :: np.array
 
 x = InputLayer()(image)
 print(x.outputs)
@@ -19,7 +18,4 @@ print(y.outputs)
 exit()
 
 z = MagicAddLayer(tf.constant(15.0))(y)
-# end define graph 1
-
-# val = z.forward(y.forward(x.forward(image)))
 print(z.outputs)
