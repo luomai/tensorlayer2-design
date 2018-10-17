@@ -49,10 +49,6 @@ class BaseLayerInstance(object):
         return self._outputs
 
     @property
-    def input_shapes(self):
-        return self._input_shapes
-
-    @property
     def inputs(self):
         return self._inputs
 
@@ -61,16 +57,14 @@ class EagerLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances, layer):
         super().__init__(input_instances)
         self._layer = layer
-        self._input_shapes = [input.shape for input in self._inputs]
 
-    def compute(self, inputs):
+    def __call__(self, inputs, train, reuse):
         return self._layer.forward(self, inputs)
 
 
 class LazyLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
         super().__init__(input_instances)
-        self._input_shapes = [input.shape[1] for input in self._inputs]
 
     @property
     def input_instances(self):
@@ -118,8 +112,8 @@ class BaseLayer(metaclass=abc.ABCMeta):
 
         self.build(instance, train, reuse)
 
-        if isinstance(instance, LazyLayerInstance):
-            instance._outputs = self.forward(instance)
+        instance._outputs = self.forward(instance)
+
         return instance
 
 
@@ -130,8 +124,7 @@ class MagicalDenseLayer(BaseLayer):
         self.n_class = n_class
 
     def build(self, instance, train, reuse):
-        print(instance.input_shapes)
-        bs, n = instance.input_shapes[0]
+        bs, n = instance.inputs[0].shape
         self._add_weight(instance, 'magic_add_weight', (int(n), self.n_class), train, reuse)
 
     def forward(self, instance):
