@@ -19,4 +19,18 @@ y = MagicalDenseLayer(tf.constant(10.0), 1000)(x, train=True, reuse=False)
 z = MagicalDenseLayer(tf.constant(15.0), 1000)(y, train=True, reuse=False)
 print(z.outputs)
 
-exit()
+
+def sequential_example():
+    layers = [
+        MagicalDenseLayer(tf.constant(10.0), 100),
+        MagicalDenseLayer(tf.constant(15.0), 100),
+    ]
+
+    y = x
+    for layer in layers:
+        y = layer(y, train=True, reuse=False)
+
+    print(y.outputs)
+
+
+sequential_example()

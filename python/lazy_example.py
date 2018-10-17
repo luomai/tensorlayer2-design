@@ -17,3 +17,19 @@ print(y.all_weights)
 
 print('z :: %s' % (z))
 print(z.all_weights)
+
+
+def sequential_example():
+    layers = [
+        MagicalDenseLayer(tf.constant(10.0), 100),
+        MagicalDenseLayer(tf.constant(15.0), 100),
+    ]
+
+    y = x
+    for layer in layers:
+        y = layer(y, train=True, reuse=False)
+
+    print(y.outputs)
+
+
+sequential_example()
