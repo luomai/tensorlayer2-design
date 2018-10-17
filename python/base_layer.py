@@ -3,9 +3,7 @@ import abc
 from abc import abstractmethod
 
 import tensorflow as tf
-# import tensorlayer as tl
 import tensorlayer_mock as tl
-import numpy as np
 
 def get_all_weights(l):
     # FIXME: remove dup
@@ -74,8 +72,6 @@ class LazyLayerInstance(BaseLayerInstance):
 
 # Layer API
 class BaseLayer(metaclass=abc.ABCMeta):
-    def __init__(self):
-        pass
 
     @abstractmethod
     def build(self, instance, train, reuse):
@@ -89,10 +85,10 @@ class BaseLayer(metaclass=abc.ABCMeta):
 
     # Protected method
     @classmethod
-    def _add_weight(cls, instance, name, shape, train, reuse):
-        weight = tl.get_variable(name, shape, train, reuse)  # tl.get_variable should follow tf.keras.layers
+    def _add_weight(self, instance, scope_name, var_name, shape, train, reuse):
+        weight = tl.get_variable(scope_name=scope_name, var_name=var_name, shape=shape, train=train, reuse=reuse)
         instance.weights.append(weight)  # Add into the weight collection
-        instance.add_attribute(name, weight)
+        instance.add_attribute(var_name, weight)
         return weight
 
     def __call__(self, input_instances, train, reuse):
@@ -113,28 +109,31 @@ class BaseLayer(metaclass=abc.ABCMeta):
 
 
 class MagicalDenseLayer(BaseLayer):
-    def __init__(self, add_constant, n_class):
-        super().__init__()
-        self.add_constant = add_constant
-        self.n_class = n_class
+    def __init__(self, name, add_constant, n_class):
+        self._name = name
+        self._add_constant = add_constant
+        self._n_class = n_class
 
     def build(self, instance, train, reuse):
         shape = []
         for dim in instance.inputs[0].shape[1:]:
             shape.append(int(dim))
-        shape.append(int(self.n_class))
-        self._add_weight(instance, 'magic_add_weight', tuple(shape), train, reuse)
+        shape.append(int(self._n_class))
+        self._add_weight(instance, self._name, "w1", tuple(shape), train, reuse)
 
     def forward(self, instance):
         outputs = []
         for input in instance.inputs:
-            y = tf.matmul(input, instance.magic_add_weight)
-            z = tf.add(y, self.add_constant)
+            y = tf.matmul(input, instance.w1)
+            z = tf.add(y, self._add_constant)
             outputs.append(z)
         return outputs
 
 
 class InputLayer(BaseLayer):
+    def __init__(self, name="input"):
+        self._name = name
+
     def build(self, instance):
         pass
 
