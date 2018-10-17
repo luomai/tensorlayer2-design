@@ -119,8 +119,11 @@ class MagicalDenseLayer(BaseLayer):
         self.n_class = n_class
 
     def build(self, instance, train, reuse):
-        bs, n = instance.inputs[0].shape
-        self._add_weight(instance, 'magic_add_weight', (int(n), self.n_class), train, reuse)
+        shape = []
+        for dim in instance.inputs[0].shape[1:]:
+            shape.append(int(dim))
+        shape.append(int(self.n_class))
+        self._add_weight(instance, 'magic_add_weight', tuple(shape), train, reuse)
 
     def forward(self, instance):
         outputs = []
