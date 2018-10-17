@@ -23,11 +23,15 @@ def get_all_weights(l):
 
 # Layer factory API
 class BaseLayerInstance(object):
-    def __init__(self):
+    def __init__(self, input_instances):
+        self._input_instances = input_instances
         self._weights = []
-        self._inputs = None
         self._outputs = None
-        self._input_instances = None
+
+        self._inputs = []
+        for instance in input_instances:
+            for input in instance._outputs:
+                self._inputs.append(input)
 
     def add_attribute(self, name, attr):
         setattr(self, name, attr)
@@ -44,12 +48,20 @@ class BaseLayerInstance(object):
     def outputs(self):
         return self._outputs
 
+    @property
+    def input_shapes(self):
+        return self._input_shapes
+
+    @property
+    def inputs(self):
+        return self._inputs
+
 
 class EagerLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances, layer):
-        super().__init__()
-        self._input_instances = input_instances
+        super().__init__(input_instances)
         self._layer = layer
+        self._input_shapes = [input.shape for input in self._inputs]
 
     def compute(self, inputs):
         return self._layer.forward(self, inputs)
@@ -57,8 +69,8 @@ class EagerLayerInstance(BaseLayerInstance):
 
 class LazyLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
-        super().__init__()
-        self._input_instances = input_instances
+        super().__init__(input_instances)
+        self._input_shapes = [input.shape[1] for input in self._inputs]
 
     @property
     def input_instances(self):
@@ -77,12 +89,12 @@ class BaseLayer(metaclass=abc.ABCMeta):
         pass
 
     @abstractmethod
-    def build(self, instance, input_shapes, train, reuse):
+    def build(self, instance, train, reuse):
         raise Exception(
             "The build_weights method must be implemented by inherited class")
 
     @abstractmethod
-    def forward(self, instance, inputs):
+    def forward(self, instance):
         raise Exception(
             "The forward method must be implemented by inherited class")
 
@@ -95,7 +107,7 @@ class BaseLayer(metaclass=abc.ABCMeta):
         return weight
 
     def __call__(self, input_instances, train, reuse):
-        # FIXME: use "*args and **kwargs"
+        # FIXME: use "*args and **kwargs" for input parameters
         if not isinstance(input_instances, list):
             input_instances = [input_instances]
 
@@ -104,33 +116,27 @@ class BaseLayer(metaclass=abc.ABCMeta):
         else:
             instance = LazyLayerInstance(list(input_instances))
 
-        inputs = []
-        for instance in input_instances:
-            for input in instance._outputs:
-                inputs.append(input)
-        input_shapes = [input.shape for input in inputs] # shape[0] is batch size
-        self.build(instance, input_shapes, train, reuse)
+        self.build(instance, train, reuse)
 
         if isinstance(instance, LazyLayerInstance):
-            instance._outputs = self.forward(instance, inputs)
+            instance._outputs = self.forward(instance)
         return instance
 
 
-class MagicAddLayer(BaseLayer):
-    def __init__(self, add_constant):
+class MagicalDenseLayer(BaseLayer):
+    def __init__(self, add_constant, n_class):
         super().__init__()
         self.add_constant = add_constant
-        self.m = 1000
+        self.n_class = n_class
 
-    # @overrides(BaseLayer)
-    def build(self, instance, input_shapes, train, reuse):
-        batch_size, n = input_shapes[0] # assume only one
-        self._add_weight(instance, 'magic_add_weight', (int(n), self.m), train, reuse)
+    def build(self, instance, train, reuse):
+        print(instance.input_shapes)
+        bs, n = instance.input_shapes[0]
+        self._add_weight(instance, 'magic_add_weight', (int(n), self.n_class), train, reuse)
 
-    # @overrides(BaseLayer)
-    def forward(self, instance, inputs):
+    def forward(self, instance):
         outputs = []
-        for input in inputs:
+        for input in instance.inputs:
             y = tf.matmul(input, instance.magic_add_weight)
             z = tf.add(y, self.add_constant)
             outputs.append(z)
@@ -138,11 +144,11 @@ class MagicAddLayer(BaseLayer):
 
 
 class InputLayer(BaseLayer):
-    def build(self, instance, input_shapes):
+    def build(self, instance):
         pass
 
-    def forward(self, instance, inputs):
-        return inputs
+    def forward(self, instance):
+        return instance.inputs()
 
     def __call__(self, input_tensor):
         if tf.executing_eagerly():

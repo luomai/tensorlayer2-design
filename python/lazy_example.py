@@ -9,8 +9,8 @@ from base_layer import InputLayer, MagicAddLayer
 image = tf.placeholder(tf.float32, [None, 28 * 28 * 3])
 
 x = InputLayer()(image)
-y = MagicAddLayer(tf.constant(10.0))(x, train=True, reuse=True)
-z = MagicAddLayer(tf.constant(15.0))(y, train=True, reuse=True)
+y = MagicAddLayer(tf.constant(10.0), 1000)(x, train=True, reuse=False)
+z = MagicAddLayer(tf.constant(15.0), 1000)(y, train=True, reuse=False)
 
 print('y :: %s' % (y))
 print(y.all_weights)
