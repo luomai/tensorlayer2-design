@@ -5,6 +5,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import tensorlayer_mock as tl
 
+
 def get_all_weights(l):
     # FIXME: remove dup
     all_weights = []
@@ -55,6 +56,7 @@ class EagerLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
         super().__init__(input_instances)
 
+
 class LazyLayerInstance(BaseLayerInstance):
     def __init__(self, input_instances):
         super().__init__(input_instances)
@@ -71,7 +73,9 @@ class LazyLayerInstance(BaseLayerInstance):
 
 
 # Layer API
-class BaseLayer(metaclass=abc.ABCMeta):
+class BaseLayer(object):
+    def __init__(self, name):
+        self.name = name
 
     @abstractmethod
     def build(self, instance, train, reuse):
@@ -86,7 +90,12 @@ class BaseLayer(metaclass=abc.ABCMeta):
     # Protected method
     @classmethod
     def _add_weight(self, instance, scope_name, var_name, shape, train, reuse):
-        weight = tl.get_variable(scope_name=scope_name, var_name=var_name, shape=shape, train=train, reuse=reuse)
+        weight = tl.get_variable(
+            scope_name=scope_name,
+            var_name=var_name,
+            shape=shape,
+            train=train,
+            reuse=reuse)
         instance.weights.append(weight)  # Add into the weight collection
         instance.add_attribute(var_name, weight)
         return weight
@@ -110,7 +119,7 @@ class BaseLayer(metaclass=abc.ABCMeta):
 
 class MagicalDenseLayer(BaseLayer):
     def __init__(self, name, add_constant, n_class):
-        self._name = name
+        super().__init__(name)
         self._add_constant = add_constant
         self._n_class = n_class
 
@@ -119,7 +128,7 @@ class MagicalDenseLayer(BaseLayer):
         for dim in instance.inputs[0].shape[1:]:
             shape.append(int(dim))
         shape.append(int(self._n_class))
-        self._add_weight(instance, self._name, "w1", tuple(shape), train, reuse)
+        self._add_weight(instance, self.name, "w1", tuple(shape), train, reuse)
 
     def forward(self, instance):
         outputs = []
@@ -132,7 +141,7 @@ class MagicalDenseLayer(BaseLayer):
 
 class InputLayer(BaseLayer):
     def __init__(self, name="input"):
-        self._name = name
+        super().__init__(name)
 
     def build(self, instance):
         pass

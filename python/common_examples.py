@@ -7,10 +7,12 @@ def simple_example(image):
     x = InputLayer()(image)
     print(x.outputs)
 
-    y = MagicalDenseLayer("magic1", tf.constant(10.0), 1000)(x, train=True, reuse=False)
+    y = MagicalDenseLayer("magic1", tf.constant(10.0), 1000)(
+        x, train=True, reuse=False)
     # print(y.outputs)
 
-    z = MagicalDenseLayer("magic2", tf.constant(15.0), 1000)(y, train=True, reuse=False)
+    z = MagicalDenseLayer("magic2", tf.constant(15.0), 1000)(
+        y, train=True, reuse=False)
     print(z.outputs)
 
 
