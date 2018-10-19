@@ -71,6 +71,11 @@ class LazyLayerInstance(BaseLayerInstance):
         return '{%s} -> {%s}, %d weights' % (input_spec, output_spec,
                                              len(self._weights))
 
+    def __call__(self, input_instances):
+        instance = deep_copy(self)
+        self.layer.forward(instance)
+        return instance
+
 
 # Layer API
 class BaseLayer(object):
@@ -78,7 +83,7 @@ class BaseLayer(object):
         self.name = name
 
     @abstractmethod
-    def build(self, instance, train, reuse):
+    def build(self, instance, train):
         raise Exception(
             "The build_weights method must be implemented by inherited class")
 
@@ -89,18 +94,17 @@ class BaseLayer(object):
 
     # Protected method
     @classmethod
-    def _add_weight(self, instance, scope_name, var_name, shape, train, reuse):
+    def _add_weight(self, instance, scope_name, var_name, shape, train):
         weight = tl.get_variable(
             scope_name=scope_name,
             var_name=var_name,
             shape=shape,
-            train=train,
-            reuse=reuse)
+            train=train)
         instance.weights.append(weight)  # Add into the weight collection
         instance.add_attribute(var_name, weight)
         return weight
 
-    def __call__(self, input_instances, train, reuse):
+    def __call__(self, input_instances, train, reused_weights=None):
         # FIXME: use "*args and **kwargs" for input parameters
         if not isinstance(input_instances, list):
             input_instances = [input_instances]
@@ -110,7 +114,12 @@ class BaseLayer(object):
         else:
             instance = LazyLayerInstance(input_instances)
 
-        self.build(instance, train, reuse)
+        if reused_weights is None:
+            self.build(instance, train)
+        else:
+            instance._weights = reused_weights
+            for weight in reused_weights:
+                instance.add_attribute(weight.name, weight)
 
         instance._outputs = self.forward(instance)
 
@@ -123,12 +132,12 @@ class MagicalDenseLayer(BaseLayer):
         self._add_constant = add_constant
         self._n_class = n_class
 
-    def build(self, instance, train, reuse):
+    def build(self, instance, train):
         shape = []
         for dim in instance.inputs[0].shape[1:]:
             shape.append(int(dim))
         shape.append(int(self._n_class))
-        self._add_weight(instance, self.name, "w1", tuple(shape), train, reuse)
+        self._add_weight(instance, self.name, "w1", tuple(shape), train)
 
     def forward(self, instance):
         outputs = []
