@@ -28,12 +28,12 @@ class BaseLayer(object):
 
         # Layer weight state
         self._built = False
-        self._weights = []
+        self._weights = None
 
         # Layer forward state
         self._input_layers = None
         self._outputs = None
-        self._inputs = []
+        self._inputs = None
 
     @abstractmethod
     def build(self, inputs, train):
@@ -82,10 +82,12 @@ class BaseLayer(object):
 
         self._input_layers = input_layers
         for instance in input_layers:
+            self._inputs = []
             for input in instance._outputs:
                 self._inputs.append(input)
 
         if not self._built:
+            self._weights = []
             self.build(self._inputs, train)
             self._built = True
 
