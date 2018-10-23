@@ -129,5 +129,14 @@ class InputLayer(BaseLayer):
         return inputs
 
     def __call__(self, input_tensor):
+
+        if not self._built:
+            self._weights = []
+            self._built = True
+
+        self._weights = []
+        self._input_layers = []
+        self._inputs = []
+
         self._outputs = [input_tensor]
         return self

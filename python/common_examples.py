@@ -14,6 +14,7 @@ def simple_example(image):
     z = MagicalDenseLayer("magic2", tf.constant(15.0), 1000)(
         y, train=True)
     print(z.outputs)
+    print(z.all_weights)
 
 
 def sequential_example(image):
