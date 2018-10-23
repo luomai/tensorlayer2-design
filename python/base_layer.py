@@ -87,6 +87,7 @@ class BaseLayer(object):
 
         if not self._built:
             self.build(self._inputs, train)
+            self._built = True
 
         self._outputs = self.forward(self._inputs)
 
