@@ -7,13 +7,13 @@ from base_layer import InputLayer, MagicalDenseLayer
 image = tf.placeholder(tf.float32, [None, 28 * 28 * 3])
 x = InputLayer()(image)
 
-
 layer1 = MagicalDenseLayer(tf.constant(10.0), 1000, "magic1")(x, train=True)
 
-layer2 = MagicalDenseLayer(tf.constant(15.0), 1000)(
-    layer1, train=True)
+layer2 = MagicalDenseLayer(tf.constant(15.0), 1000)(layer1, train=True)
 
-layer3 = MagicalDenseLayer(tf.constant(10.0), 1000, "magic1")(layer2, train=True, reuse=True)
+layer3 = MagicalDenseLayer(tf.constant(10.0), 1000, "magic1")(
+    layer2, train=True, reuse=True)
+
 
 # Keras-based reuse
 class Model:
@@ -37,6 +37,7 @@ def network(x, var_lists, train):
 
         x3 = MagicalDenseLayer(tf.constant(15.0), 1000, "magic3")(
             x2, train=True)
+
 
 train_net1 = network(x, var_lists=None, train=True)
 validate_net2 = network(x, train_net1.all_weights, train=False)

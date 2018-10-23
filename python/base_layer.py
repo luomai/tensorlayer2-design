@@ -67,10 +67,7 @@ class BaseLayer(object):
 
     def _add_weight(self, scope_name, var_name, shape, train):
         weight = tl.get_variable(
-            scope_name=scope_name,
-            var_name=var_name,
-            shape=shape,
-            train=train)
+            scope_name=scope_name, var_name=var_name, shape=shape, train=train)
         self._weights.append(weight)  # Add into the weight collection
         self.__setattr__(var_name, weight)
         return weight
