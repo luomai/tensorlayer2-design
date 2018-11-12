@@ -11,7 +11,7 @@ def get_all_weights(l):
     all_weights = []
 
     def _visit(l):
-        for layer in l.input_layers:
+        for layer in l.input_layer:
             if isinstance(layer, BaseLayer):
                 _visit(layer)
         all_weights.extend(l.weights)
@@ -31,7 +31,7 @@ class BaseLayer(object):
         self._weights = None
 
         # Layer forward state
-        self._input_layers = None
+        self._input_layer = None
         self._outputs = None
         self._inputs = None
 
@@ -62,26 +62,29 @@ class BaseLayer(object):
         return self._inputs
 
     @property
-    def input_layers(self):
-        return self._input_layers
+    def input_layer(self):
+        return self._input_layer
 
     def _add_weight(self, scope_name, var_name, shape, train):
-        weight = tl.get_variable(
+        # weight = tl.get_variable(
+        #     scope_name=scope_name, var_name=var_name, shape=shape, train=train)
+        weight = tl.get_variable_with_initializer(
             scope_name=scope_name, var_name=var_name, shape=shape, train=train)
         self._weights.append(weight)  # Add into the weight collection
         self.__setattr__(var_name, weight)
         return weight
 
-    def __call__(self, input_layers, train):
+    def __call__(self, input_layer, train):
         # FIXME: use "*args and **kwargs" for input parameters
-        if not isinstance(input_layers, list):
-            input_layers = [input_layers]
+        # if not isinstance(input_layer, list):
+        #     input_layer = [input_layer]
 
-        self._input_layers = input_layers
-        for instance in input_layers:
-            self._inputs = []
-            for input in instance._outputs:
-                self._inputs.append(input)
+        self._input_layer = input_layer
+        # for instance in input_layer:
+            # self._inputs = []
+            # for input in instance._outputs:
+            #     self._inputs.append(input)
+        self._inputs = self._input_layer._outputs
 
         if not self._built:
             self._weights = []
@@ -101,18 +104,42 @@ class MagicalDenseLayer(BaseLayer):
 
     def build(self, inputs, train):
         shape = []
-        for dim in inputs[0].shape[1:]:
+        for dim in inputs.shape[1:]:
             shape.append(int(dim))
         shape.append(int(self._n_class))
         self._add_weight(self.name, "w1", tuple(shape), train)
 
     def forward(self, inputs):
-        outputs = []
-        for input in inputs:
-            y = tf.matmul(input, self.w1)
-            z = tf.add(y, self._add_constant)
-            outputs.append(z)
-        return outputs
+        # outputs = []
+        # for input in inputs:
+        y = tf.matmul(inputs, self.w1)
+        z = tf.add(y, self._add_constant)
+        # outputs.append(z)
+        return z
+
+
+class DenseLayer(BaseLayer):
+    def __init__(self, name, n_units, act):
+        super().__init__(name)
+        self._n_units = n_units
+        self._act = act
+
+    def build(self, inputs, train):
+        shape = []
+        for dim in inputs.shape[1:]:
+            shape.append(int(dim))
+        shape.append(int(self._n_units))
+        self._add_weight(self.name, "w1", tuple(shape), train)
+        self._add_weight(self.name, "b1", int(self._n_units), train)
+
+    def forward(self, inputs):
+        # outputs = []
+        # for input in inputs:
+        y = tf.matmul(inputs, self.w1)
+        z = tf.add(y, self.b1)
+        z = self._act(z)
+        # outputs.append(z)
+        return z
 
 
 class InputLayer(BaseLayer):
@@ -132,8 +159,9 @@ class InputLayer(BaseLayer):
             self._built = True
 
         self._weights = []
-        self._input_layers = []
-        self._inputs = []
+        self._input_layer = None
+        self._inputs = None
 
-        self._outputs = [input_tensor]
+        # self._outputs = [input_tensor]
+        self._outputs = input_tensor
         return self
