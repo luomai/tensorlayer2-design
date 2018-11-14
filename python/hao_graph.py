@@ -2,14 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
-import tensorlayer as tl
+from base_layer import Input, Dropout, Dense
 import numpy as np
 
 def disciminator(inputs, is_train):
-    net = tl.layers.Dense(n_units=32, act=tf.nn.elu)(inputs)
-    net = tl.layers.Dropout(keep=0.8)(net)
-    net1 = tl.layers.Dense(n_units=1)(net)
-    net2 = tl.layers.Dense(n_units=5)(net)
+    net = Input()(inputs)
+    net = Dense(n_units=32, act=tf.nn.elu)(net)
+    net = Dropout(keep=0.8, seed=1)(net)
+    net1 = Dense(n_units=1, act=tf.nn.elu)(net)
+    net2 = Dense(n_units=5, act=tf.nn.elu)(net)
     D = tl.Model(inputs=inputs, outputs=[net1, net2], is_train=is_train)
     return D
 

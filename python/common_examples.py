@@ -7,18 +7,18 @@ def simple_example(image):
     x = InputLayer()(image)
     print(x.outputs)
 
-    y = MagicalDenseLayer("magic1", tf.constant(10.0), 1000)(x, train=True)
+    y = MagicalDenseLayer(tf.constant(10.0), 1000, "magic1")(x, train=True)
     # print(y.outputs)
 
-    z = MagicalDenseLayer("magic2", tf.constant(15.0), 1000)(y, train=True)
+    z = MagicalDenseLayer(tf.constant(15.0), 1000, "magic2")(y, train=True)
     print(z.outputs)
     print(z.all_weights)
 
 
 def sequential_example(image):
     layers = [
-        MagicalDenseLayer("magic3", tf.constant(10.0), 100),
-        MagicalDenseLayer("magic4", tf.constant(15.0), 100),
+        MagicalDenseLayer(tf.constant(10.0), 100, "magic3"),
+        MagicalDenseLayer(tf.constant(15.0), 100, "magic4"),
     ]
 
     y = InputLayer()(image)

@@ -36,12 +36,12 @@ class BaseLayer(object):
         self._inputs = None
 
     @abstractmethod
-    def build(self, inputs, train):
+    def build(self, inputs):
         raise Exception(
             "The build_weights method must be implemented by inherited class")
 
     @abstractmethod
-    def forward(self, inputs):
+    def forward(self, inputs, is_trian):
         raise Exception(
             "The forward method must be implemented by inherited class")
 
@@ -97,19 +97,19 @@ class BaseLayer(object):
 
 
 class MagicalDenseLayer(BaseLayer):
-    def __init__(self, name, add_constant, n_class):
+    def __init__(self, add_constant, n_class, name="magic_dense"):
         super().__init__(name)
         self._add_constant = add_constant
         self._n_class = n_class
 
-    def build(self, inputs, train):
+    def build(self, inputs):
         shape = []
         for dim in inputs.shape[1:]:
             shape.append(int(dim))
         shape.append(int(self._n_class))
-        self._add_weight(self.name, "w1", tuple(shape), train)
+        self._add_weight(self.name, "w1", tuple(shape))
 
-    def forward(self, inputs):
+    def forward(self, inputs, is_train):
         # outputs = []
         # for input in inputs:
         y = tf.matmul(inputs, self.w1)
@@ -119,20 +119,20 @@ class MagicalDenseLayer(BaseLayer):
 
 
 class Dense(BaseLayer):
-    def __init__(self, n_units, act, name):
+    def __init__(self, n_units, act, name="dense"):
         super().__init__(name)
         self._n_units = n_units
         self._act = act
 
-    def build(self, inputs, train):
+    def build(self, inputs):
         shape = []
         for dim in inputs.shape[1:]:
             shape.append(int(dim))
         shape.append(int(self._n_units))
-        self._add_weight(self.name, "w1", tuple(shape), train)
-        self._add_weight(self.name, "b1", int(self._n_units), train)
+        self._add_weight(self.name, "w1", tuple(shape))
+        self._add_weight(self.name, "b1", int(self._n_units))
 
-    def forward(self, inputs):
+    def forward(self, inputs, is_train):
         # outputs = []
         # for input in inputs:
         y = tf.matmul(inputs, self.w1)
@@ -143,16 +143,19 @@ class Dense(BaseLayer):
 
 
 class Dropout(BaseLayer):
-    def __init__(self, keep, seed, name):
+    def __init__(self, keep, seed, name="dropout"):
         super().__init__(name)
         self._keep = keep
         self._seed = seed
 
-    def build(self):
+    def build(self, inputs):
         pass
     
     def forward(self, inputs, is_train):
-        outputs = tf.nn.dropout(inputs, keep=self._keep, seed=self._seed, name=self.name)
+        if is_train:
+            outputs = tf.nn.dropout(inputs, keep=self._keep, seed=self._seed, name=self.name)
+        else:
+            outputs = inputs
         return outputs
 
     
@@ -160,10 +163,10 @@ class Input(BaseLayer):
     def __init__(self, name="input"):
         super().__init__(name)
 
-    def build(self, inputs, train):
+    def build(self, inputs):
         pass
 
-    def forward(self, inputs):
+    def forward(self, inputs, is_train):
         return inputs
 
     def __call__(self, input_tensor):
