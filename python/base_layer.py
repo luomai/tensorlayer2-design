@@ -118,8 +118,8 @@ class MagicalDenseLayer(BaseLayer):
         return z
 
 
-class DenseLayer(BaseLayer):
-    def __init__(self, name, n_units, act):
+class Dense(BaseLayer):
+    def __init__(self, n_units, act, name):
         super().__init__(name)
         self._n_units = n_units
         self._act = act
@@ -142,7 +142,21 @@ class DenseLayer(BaseLayer):
         return z
 
 
-class InputLayer(BaseLayer):
+class Dropout(BaseLayer):
+    def __init__(self, keep, seed, name):
+        super().__init__(name)
+        self._keep = keep
+        self._seed = seed
+
+    def build(self):
+        pass
+    
+    def forward(self, inputs, is_train):
+        outputs = tf.nn.dropout(inputs, keep=self._keep, seed=self._seed, name=self.name)
+        return outputs
+
+    
+class Input(BaseLayer):
     def __init__(self, name="input"):
         super().__init__(name)
 
