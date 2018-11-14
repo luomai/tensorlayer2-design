@@ -11,6 +11,7 @@ tf.enable_eager_execution()
 def generator(input_shape):
     inputs = tl.layers.Input(input_shape)
     net = tl.layers.Dense(n_units=64, act=tf.nn.elu)(inputs)
+    net = tl.layers.Dropout(keep=0.8)(net)
     net2 = tl.layers.Dense(n_units=64, act=tf.nn.elu)(net)
 
     test = tl.layers.Dense(units=64, activation=tf.nn.elu, name="fc3")
