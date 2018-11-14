@@ -7,6 +7,7 @@ import numpy as np
 
 def disciminator(inputs, is_train):
     net = tl.layers.Dense(n_units=32, act=tf.nn.elu)(inputs)
+    net = tl.layers.Dropout(keep=0.8)(net)
     net1 = tl.layers.Dense(n_units=1)(net)
     net2 = tl.layers.Dense(n_units=5)(net)
     D = tl.Model(inputs=inputs, outputs=[net1, net2], is_train=is_train)
