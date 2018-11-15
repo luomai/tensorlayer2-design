@@ -65,16 +65,16 @@ class BaseLayer(object):
     def input_layer(self):
         return self._input_layer
 
-    def _add_weight(self, scope_name, var_name, shape, train):
+    def _add_weight(self, scope_name, var_name, shape):
         # weight = tl.get_variable(
         #     scope_name=scope_name, var_name=var_name, shape=shape, train=train)
         weight = tl.get_variable_with_initializer(
-            scope_name=scope_name, var_name=var_name, shape=shape, train=train)
+            scope_name=scope_name, var_name=var_name, shape=shape)
         self._weights.append(weight)  # Add into the weight collection
         self.__setattr__(var_name, weight)
         return weight
 
-    def __call__(self, input_layer, train):
+    def __call__(self, input_layer):
         # FIXME: use "*args and **kwargs" for input parameters
         # if not isinstance(input_layer, list):
         #     input_layer = [input_layer]
@@ -88,7 +88,7 @@ class BaseLayer(object):
 
         if not self._built:
             self._weights = []
-            self.build(self._inputs, train)
+            self.build(self._inputs)
             self._built = True
 
         self._outputs = self.forward(self._inputs)
