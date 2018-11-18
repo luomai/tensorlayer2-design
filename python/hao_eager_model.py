@@ -14,7 +14,7 @@ def generator(input_shape):
     net = tl.layers.Dropout(keep=0.8)(net)
     net2 = tl.layers.Dense(n_units=64, act=tf.nn.elu)(net)
 
-    test = tl.layers.Dense(units=64, activation=tf.nn.elu, name="fc3")
+    test = tl.layers.Dense(units=64, act=tf.nn.elu, name="fc3")
     print(test.weights)
     print(test.input_shape, test.output_shape) # see more from keras: https://tensorflow.google.cn/api_docs/python/tf/keras/layers/Conv2D
     
