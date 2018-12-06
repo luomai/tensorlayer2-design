@@ -35,6 +35,11 @@ def get_variable_with_initializer(scope_name, var_name, shape):
     return var
 
 
+class Model():
+    def __init__(self):
+        pass
+
+
 if __name__ == "__main__":
     tf.enable_eager_execution()
 
