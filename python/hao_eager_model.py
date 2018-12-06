@@ -2,33 +2,32 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
-import tensorlayer as tl
+import tensorlayer_mock as tl
+from base_layer import Input, Dropout, Dense
 import numpy as np
 # import tensorflow.contrib.eager as tfe
 # from keras.datasets import cifar10
+
 tf.enable_eager_execution()
 
-def generator(input_shape):
-    inputs = tl.layers.Input(input_shape)
-    net = tl.layers.Dense(n_units=64, act=tf.nn.elu)(inputs)
-    net = tl.layers.Dropout(keep=0.8)(net)
-    net2 = tl.layers.Dense(n_units=64, act=tf.nn.elu)(net)
+def generator(inputs, train):
+    net = Input()(inputs)
+    net = Dense(n_units=64, act=tf.nn.relu)(net, train)
+    net = Dropout(keep=0.8, seed=1)(net, train)
+    net = Dense(n_units=64, act=tf.nn.relu)(net, train)
+    net = Dense(n_units=1, act=tf.nn.relu)(net, train)
+    print(net.weights)
+    exit()
 
-    test = tl.layers.Dense(units=64, act=tf.nn.elu, name="fc3")
-    print(test.weights)
-    print(test.input_shape, test.output_shape) # see more from keras: https://tensorflow.google.cn/api_docs/python/tf/keras/layers/Conv2D
-    
-    # print(net2.output) # AttributeError: 'DeferredTensor' object has no attribute 'output'
-    print(net2)
-    print(net2.shape, net2.name, net2.dtype)
-    print(tl.layers.Dense(n_units=64, act=tf.nn.elu).weights)
-
-    net = tl.layers.Dense(n_units=1)(net2)
     G = tl.Model(inputs=inputs, outputs=[net, net2])
     return G, net2
 
-latent_space_size = 100
-G, net2 = generator((None, latent_space_size))
+# latent_space_size = 100
+# G, net2 = generator((None, latent_space_size))
+inputs = np.zeros([100, 100], dtype="float32")
+inputs = tf.convert_to_tensor(inputs)
+G, net2 = generator(inputs, train=True)
+exit()
 G.print_weights(True)
 G.print_layers()
 G.count_weights()

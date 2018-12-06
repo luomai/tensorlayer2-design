@@ -41,7 +41,7 @@ class BaseLayer(object):
             "The build_weights method must be implemented by inherited class")
 
     @abstractmethod
-    def forward(self, inputs, is_trian):
+    def forward(self, inputs, train):
         raise Exception(
             "The forward method must be implemented by inherited class")
 
@@ -74,7 +74,7 @@ class BaseLayer(object):
         self.__setattr__(var_name, weight)
         return weight
 
-    def __call__(self, input_layer):
+    def __call__(self, input_layer, train):
         # FIXME: use "*args and **kwargs" for input parameters
         # if not isinstance(input_layer, list):
         #     input_layer = [input_layer]
@@ -91,32 +91,9 @@ class BaseLayer(object):
             self.build(self._inputs)
             self._built = True
 
-        self._outputs = self.forward(self._inputs)
+        self._outputs = self.forward(self._inputs, train)
 
         return self
-
-
-class MagicalDenseLayer(BaseLayer):
-    def __init__(self, add_constant, n_class, name="magic_dense"):
-        super().__init__(name)
-        self._add_constant = add_constant
-        self._n_class = n_class
-
-    def build(self, inputs):
-        shape = []
-        for dim in inputs.shape[1:]:
-            shape.append(int(dim))
-        shape.append(int(self._n_class))
-        self._add_weight(self.name, "w1", tuple(shape))
-
-    def forward(self, inputs, is_train):
-        # outputs = []
-        # for input in inputs:
-        y = tf.matmul(inputs, self.w1)
-        z = tf.add(y, self._add_constant)
-        # outputs.append(z)
-        return z
-
 
 class Dense(BaseLayer):
     def __init__(self, n_units, act, name="dense"):
@@ -132,7 +109,7 @@ class Dense(BaseLayer):
         self._add_weight(self.name, "w1", tuple(shape))
         self._add_weight(self.name, "b1", int(self._n_units))
 
-    def forward(self, inputs, is_train):
+    def forward(self, inputs, train):
         # outputs = []
         # for input in inputs:
         y = tf.matmul(inputs, self.w1)
@@ -151,9 +128,14 @@ class Dropout(BaseLayer):
     def build(self, inputs):
         pass
     
-    def forward(self, inputs, is_train):
-        if is_train:
-            outputs = tf.nn.dropout(inputs, keep=self._keep, seed=self._seed, name=self.name)
+    def forward(self, inputs, train):
+        if train:
+            outputs = tf.nn.dropout(
+                inputs,
+                keep_prob=self._keep,
+                seed=self._seed,
+                name=self.name
+            )
         else:
             outputs = inputs
         return outputs
@@ -166,7 +148,7 @@ class Input(BaseLayer):
     def build(self, inputs):
         pass
 
-    def forward(self, inputs, is_train):
+    def forward(self, inputs, train):
         return inputs
 
     def __call__(self, input_tensor):
