@@ -4,8 +4,7 @@
 import tensorflow as tf
 import tensorlayer as tl
 import numpy as np
-# import tensorflow.contrib.eager as tfe
-# from keras.datasets import cifar10
+from base_layer import Input, Dropout, Dense
 tf.enable_eager_execution()
 
 class MyModel(tl.Model):
