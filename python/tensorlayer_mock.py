@@ -46,7 +46,7 @@ class Model():
     def outputs(self):
         return self._outputs
 
-    def __init__(self, inputs, outputs, is_train, name="mymodel"):
+    def __init__(self, inputs=None, outputs=None, name="mymodel"):
         # Model properties
         self.name = name
 
@@ -56,9 +56,9 @@ class Model():
         self._outputs = outputs
 
         # Model state: train or test
-        self.is_train = is_train
+        # self.is_train = is_train
 
-    def __call__(self, inputs):
+    def __call__(self, inputs, is_train):
         # TODO: check inputs corresponds with self._inputs
         results = list()
         for out in self._outputs:
@@ -71,7 +71,7 @@ class Model():
             # FIXME: assume there is only one inputs
             z = inputs
             for layer in stacked_layers[::-1]:
-                z = layer.forward(z, self.is_train)
+                z = layer.forward(z, is_train)
             results.append(z)
         return results
 

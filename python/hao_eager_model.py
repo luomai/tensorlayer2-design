@@ -10,7 +10,7 @@ import numpy as np
 
 tf.enable_eager_execution()
 
-def generator(inputs_shape, train):
+def generator(inputs_shape):
     innet = Input(inputs_shape)
     net = Dense(n_units=64, act=tf.nn.relu)(innet)
     net = Dropout(keep=0.8, seed=1)(net)
@@ -18,11 +18,11 @@ def generator(inputs_shape, train):
     net1 = Dense(n_units=1, act=tf.nn.relu)(net)
     net2 = Dense(n_units=5, act=tf.nn.relu)(net)
 
-    G = tl.Model(inputs=innet, outputs=[net1, net2], is_train=True)
+    G = tl.Model(inputs=innet, outputs=[net1, net2])
     return G, net2
 
 latent_space_size = 100
-G, net2 = generator((None, latent_space_size), train=True)
+G, net2 = generator((None, latent_space_size))
 # inputs = np.zeros([100, 100], dtype="float32")
 # inputs = tf.convert_to_tensor(inputs)
 # G, net2 = generator(inputs, train=True)
@@ -33,8 +33,8 @@ G, net2 = generator((None, latent_space_size), train=True)
 # print(G.outputs) # keras: [<DeferredTensor 'None' shape=(?, ?, 1) dtype=float32>, <DeferredTensor 'None' shape=(?, ?, 64) dtype=float32>]
 # print(net2.output) # keras: AttributeError: 'DeferredTensor' object has no attribute 'output'
 inputs = np.ones((10, latent_space_size), dtype="float32")
-outputs = G(inputs)
-print(outputs)
-# outputs = G(inputs, is_train=True)
-# outputs = G(inputs, is_train=False)
+outputs_train = G(inputs, True)
+outputs_test = G(inputs, False)
+print(outputs_train)
+print(outputs_test)
 
