@@ -1,6 +1,7 @@
 import abc
 
 from abc import abstractmethod
+from accepts import accepts
 
 import tensorflow as tf
 import tensorlayer_mock as tl
@@ -30,20 +31,26 @@ class BaseLayer(object):
         self._built = False
         self._weights = None
 
+        # Layer building state
+        self._inputs_shape = None
+        self._outputs_shape = None
+
         # Layer forward state
         self._input_layer = None
-        self._outputs = None
         self._inputs = None
+        self._outputs = None
 
     @abstractmethod
-    def build(self, inputs):
+    def build(self, inputs_shape):
         raise Exception(
-            "The build_weights method must be implemented by inherited class")
+            "The build_weights method must be implemented by inherited class"
+        )
 
     @abstractmethod
-    def forward(self, inputs, is_trian):
+    def forward(self, inputs, is_train):
         raise Exception(
-            "The forward method must be implemented by inherited class")
+            "The forward method must be implemented by inherited class"
+        )
 
     @property
     def all_weights(self):
@@ -66,8 +73,6 @@ class BaseLayer(object):
         return self._input_layer
 
     def _add_weight(self, scope_name, var_name, shape):
-        # weight = tl.get_variable(
-        #     scope_name=scope_name, var_name=var_name, shape=shape, train=train)
         weight = tl.get_variable_with_initializer(
             scope_name=scope_name, var_name=var_name, shape=shape)
         self._weights.append(weight)  # Add into the weight collection
@@ -76,69 +81,50 @@ class BaseLayer(object):
 
     def __call__(self, input_layer):
         # FIXME: use "*args and **kwargs" for input parameters
-        # if not isinstance(input_layer, list):
-        #     input_layer = [input_layer]
+
+        if self._built:
+            raise Exception(
+                "The layer has been built before."
+            )
+
+        if not isinstance(input_layer, (BaseLayer, Input)):
+            raise TypeError(
+                "The input_layer is supposed to be a layer but got %s"
+                % type(input_layer)
+            )
 
         self._input_layer = input_layer
-        # for instance in input_layer:
-            # self._inputs = []
-            # for input in instance._outputs:
-            #     self._inputs.append(input)
-        self._inputs = self._input_layer._outputs
+        self._inputs_shape = self._input_layer._outputs_shape
 
-        if not self._built:
-            self._weights = []
-            self.build(self._inputs)
-            self._built = True
-
-        self._outputs = self.forward(self._inputs)
+        self._weights = list()
+        self._outputs_shape = self.build(self._inputs_shape)
+        self._built = True
 
         return self
 
-
-class MagicalDenseLayer(BaseLayer):
-    def __init__(self, add_constant, n_class, name="magic_dense"):
-        super().__init__(name)
-        self._add_constant = add_constant
-        self._n_class = n_class
-
-    def build(self, inputs):
-        shape = []
-        for dim in inputs.shape[1:]:
-            shape.append(int(dim))
-        shape.append(int(self._n_class))
-        self._add_weight(self.name, "w1", tuple(shape))
-
-    def forward(self, inputs, is_train):
-        # outputs = []
-        # for input in inputs:
-        y = tf.matmul(inputs, self.w1)
-        z = tf.add(y, self._add_constant)
-        # outputs.append(z)
-        return z
-
-
 class Dense(BaseLayer):
-    def __init__(self, n_units, act, name="dense"):
+    def __init__(self, n_units, act=tf.identity, name="dense"):
         super().__init__(name)
         self._n_units = n_units
         self._act = act
+        # TODO: check input type
 
-    def build(self, inputs):
-        shape = []
-        for dim in inputs.shape[1:]:
-            shape.append(int(dim))
-        shape.append(int(self._n_units))
+    def build(self, inputs_shape):
+        if len(inputs_shape) != 2:
+            raise Exception(
+                "The inputs_shape of a dense layer is supposed to have 2 dims but got %s"
+                % str(len(inputs_shape))
+            )
+        shape = [inputs_shape[1], self._n_units]
         self._add_weight(self.name, "w1", tuple(shape))
         self._add_weight(self.name, "b1", int(self._n_units))
+        outputs_shape = [inputs_shape[0], self._n_units]
+        return outputs_shape
 
     def forward(self, inputs, is_train):
-        # outputs = []
-        # for input in inputs:
         y = tf.matmul(inputs, self.w1)
         z = tf.add(y, self.b1)
         z = self._act(z)
-        # outputs.append(z)
         return z
 
 
@@ -148,37 +134,38 @@ class Dropout(BaseLayer):
         self._keep = keep
         self._seed = seed
 
-    def build(self, inputs):
-        pass
-    
+    def build(self, inputs_shape):
+        return inputs_shape
+
     def forward(self, inputs, is_train):
         if is_train:
-            outputs = tf.nn.dropout(inputs, keep=self._keep, seed=self._seed, name=self.name)
+            outputs = tf.nn.dropout(
+                inputs,
+                keep_prob=self._keep,
+                seed=self._seed,
+                name=self.name
+            )
         else:
             outputs = inputs
         return outputs
 
     
-class Input(BaseLayer):
-    def __init__(self, name="input"):
-        super().__init__(name)
+class Input():
+    def __init__(self, inputs_shape: tuple, name="input"):
+        # Layer constants
+        self.name = name
 
-    def build(self, inputs):
-        pass
+        # Layer building state
+        self._inputs_shape = inputs_shape
+        self._outputs_shape = self.build(self._inputs_shape)
+
+        # Layer forward state
+        self._input_layer = None
+        self._inputs = None
+        self._outputs = None
+
+    def build(self, inputs_shape):
+        return inputs_shape
 
     def forward(self, inputs, is_train):
         return inputs
-
-    def __call__(self, input_tensor):
-
-        if not self._built:
-            self._weights = []
-            self._built = True
-
-        self._weights = []
-        self._input_layer = None
-        self._inputs = None
-
-        # self._outputs = [input_tensor]
-        self._outputs = input_tensor
-        return self
