@@ -23,11 +23,15 @@ def get_variables_with_name(all_weights, name):
                 weights.append(weight)
     return weights
 
-def get_variable_with_initializer(scope_name, var_name, shape):
+def get_variable_with_initializer(scope_name, var_name, shape,
+                                  init=np.random.normal, init_args=None):
     # TODO: Reference the tf.keras.layers
     # if tf.executing_eagerly():
     var_name = scope_name + "/" + var_name
-    initial_value = np.random.normal(0.0, 1.0, shape)
+    if init_args is not None:
+        initial_value = init(size=shape, **init_args)
+    else:
+        initial_value = init(size=shape)
     var = tf.Variable(
         initial_value=tf.convert_to_tensor(initial_value, dtype=tf.float32), name=var_name)
     # else:

@@ -1,5 +1,6 @@
 import abc
 
+import numpy as np
 from abc import abstractmethod
 from accepts import accepts
 
@@ -72,9 +73,11 @@ class BaseLayer(object):
     def input_layer(self):
         return self._input_layer
 
-    def _add_weight(self, scope_name, var_name, shape):
+    def _add_weight(self, scope_name, var_name, shape,
+                    init=np.random.normal, init_args=None):
         weight = tl.get_variable_with_initializer(
-            scope_name=scope_name, var_name=var_name, shape=shape)
+            scope_name=scope_name, var_name=var_name, shape=shape,
+            init=init, init_args=init_args)
         self._weights.append(weight)  # Add into the weight collection
         self.__setattr__(var_name, weight)
         return weight
@@ -150,8 +153,9 @@ class Dropout(BaseLayer):
         return outputs
 
     
-class Input():
+class Input(BaseLayer):
     def __init__(self, inputs_shape: tuple, name="input"):
+        super().__init__(name)
         # Layer constants
         self.name = name
 
